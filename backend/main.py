@@ -15,6 +15,9 @@ from backend.coordinator.agent_coordinator import AgentCoordinator
 from backend.dependencies import (
     get_agent_coordinator,
     get_cached_settings,
+    get_go_services_client,
+    get_mcp_client,
+    get_mediamagic_client,
     get_memory_manager,
 )
 from backend.memory.memory_manager import MemoryManager
@@ -241,6 +244,248 @@ async def search_memories(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e)
         )
+
+
+# MCP Server Management Endpoints
+@app.get("/mcp/servers")
+async def list_mcp_servers(
+    mcp_client = Depends(get_mcp_client)
+):
+    """List all configured MCP servers."""
+    try:
+        servers = mcp_client.list_servers()
+        return {
+            "success": True,
+            "servers": servers,
+            "total": len(servers)
+        }
+    except Exception as e:
+        logger.error("Failed to list MCP servers", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.get("/mcp/tools/{server}")
+async def list_mcp_tools(
+    server: str,
+    mcp_client = Depends(get_mcp_client)
+):
+    """List available tools from an MCP server."""
+    try:
+        tools = await mcp_client.list_remote_tools(server)
+        return {
+            "success": True,
+            "server": server,
+            "tools": tools,
+            "total": len(tools)
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Failed to list tools from {server}", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.post("/mcp/execute")
+async def execute_mcp_tool(
+    tool_name: str,
+    parameters: Dict[str, Any],
+    server: str = "default",
+    mcp_client = Depends(get_mcp_client)
+):
+    """Execute a tool via MCP."""
+    try:
+        result = await mcp_client.execute_tool(
+            tool_name=tool_name,
+            parameters=parameters,
+            server=server
+        )
+        return {
+            "success": True,
+            "tool": tool_name,
+            "server": server,
+            "result": result
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Failed to execute tool {tool_name}", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.get("/mcp/health/{server}")
+async def check_mcp_server_health(
+    server: str,
+    mcp_client = Depends(get_mcp_client)
+):
+    """Check health of an MCP server."""
+    try:
+        health = await mcp_client.health_check(server)
+        return health
+    except Exception as e:
+        logger.error(f"Health check failed for {server}", error=str(e))
+        return {
+            "healthy": False,
+            "error": str(e),
+            "server": server
+        }
+
+
+# MediaMagic API Endpoints
+@app.post("/mediamagic/process-image")
+async def process_image(
+    image_url: str,
+    operations: list[str],
+    output_format: str = "jpg",
+    quality: int = 90,
+    mediamagic_client = Depends(get_mediamagic_client)
+):
+    """Process an image using MediaMagic API."""
+    if not mediamagic_client:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="MediaMagic API is not configured"
+        )
+    
+    try:
+        result = await mediamagic_client.process_image(
+            image_url=image_url,
+            operations=operations,
+            output_format=output_format,
+            quality=quality
+        )
+        return result
+    except Exception as e:
+        logger.error("Failed to process image", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.post("/mediamagic/create-video")
+async def create_video(
+    images: list[str],
+    duration_per_image: float = 3.0,
+    transitions: list[str] | None = None,
+    audio_url: str | None = None,
+    output_format: str = "mp4",
+    mediamagic_client = Depends(get_mediamagic_client)
+):
+    """Create a video from images using MediaMagic API."""
+    if not mediamagic_client:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="MediaMagic API is not configured"
+        )
+    
+    try:
+        result = await mediamagic_client.create_video(
+            images=images,
+            duration_per_image=duration_per_image,
+            transitions=transitions,
+            audio_url=audio_url,
+            output_format=output_format
+        )
+        return result
+    except Exception as e:
+        logger.error("Failed to create video", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+# Go Services Endpoints
+@app.get("/go-services/list")
+async def list_go_services(
+    go_services_client = Depends(get_go_services_client)
+):
+    """List all available Go services."""
+    if not go_services_client:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Go Services are not configured"
+        )
+    
+    try:
+        services = await go_services_client.list_services()
+        return {
+            "success": True,
+            "services": services,
+            "total": len(services)
+        }
+    except Exception as e:
+        logger.error("Failed to list Go services", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.post("/go-services/call")
+async def call_go_service(
+    service_name: str,
+    method: str,
+    payload: Dict[str, Any],
+    go_services_client = Depends(get_go_services_client)
+):
+    """Call a Go microservice."""
+    if not go_services_client:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Go Services are not configured"
+        )
+    
+    try:
+        result = await go_services_client.call_service(
+            service_name=service_name,
+            method=method,
+            payload=payload
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to call service {service_name}.{method}", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@app.get("/go-services/health")
+async def check_go_services_health(
+    go_services_client = Depends(get_go_services_client)
+):
+    """Check health of Go services."""
+    if not go_services_client:
+        return {
+            "healthy": False,
+            "error": "Go Services are not configured"
+        }
+    
+    try:
+        health = await go_services_client.health_check()
+        return health
+    except Exception as e:
+        logger.error("Go Services health check failed", error=str(e))
+        return {
+            "healthy": False,
+            "error": str(e)
+        }
 
 
 # WebSocket endpoint
