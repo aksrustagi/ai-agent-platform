@@ -59,6 +59,36 @@ class Settings(BaseSettings):
         description="RealEstateAPI base URL"
     )
     
+    # MediaMagic API Configuration
+    mediamagic_api_url: Optional[str] = Field(
+        default=None,
+        description="MediaMagic API URL for media processing"
+    )
+    mediamagic_api_key: Optional[str] = Field(
+        default=None,
+        description="MediaMagic API key"
+    )
+    
+    # Go Services Configuration
+    go_services_url: Optional[str] = Field(
+        default=None,
+        description="Go Services base URL"
+    )
+    go_services_api_key: Optional[str] = Field(
+        default=None,
+        description="Go Services API key"
+    )
+    
+    # MCP Server Configuration
+    mcp_server_url: Optional[str] = Field(
+        default=None,
+        description="MCP server base URL"
+    )
+    mcp_enable_remote: bool = Field(
+        default=True,
+        description="Enable remote MCP server communication"
+    )
+    
     # PostgreSQL Database
     postgres_host: str = Field(default="localhost", description="PostgreSQL host")
     postgres_port: int = Field(default=5432, description="PostgreSQL port")
