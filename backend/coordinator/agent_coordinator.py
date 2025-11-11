@@ -7,6 +7,7 @@ from backend.agents.content_agent import ContentAgent
 from backend.agents.growth_agent import GrowthAgent
 from backend.agents.marketing_agent import MarketingAgent
 from backend.agents.mls_agent import MLSAgent
+from backend.agents.mortgage_agent import MortgageAgent
 from backend.agents.outreach_agent import OutreachAgent
 from backend.agents.transaction_agent import TransactionAgent
 from backend.agents.vendor_agent import VendorAgent
@@ -51,6 +52,7 @@ class AgentCoordinator:
             "transaction": TransactionAgent(settings, llm_service, memory_manager),
             "content": ContentAgent(settings, llm_service, memory_manager),
             "marketing": MarketingAgent(settings, llm_service, memory_manager),
+            "mortgage": MortgageAgent(settings, llm_service, memory_manager),
         }
         
         logger.info(f"Agent coordinator initialized with {len(self.agents)} agents")

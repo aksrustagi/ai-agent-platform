@@ -1,8 +1,15 @@
 # 🏡 AI Agent Platform for Real Estate Professionals
 
-A production-ready, multi-agent AI system with 7 specialized agents, multi-LLM support (Claude, GPT-4, Groq), persistent memory (Mem0), WebSocket real-time communication, and extensive integrations.
+A production-ready, **truly agentic** AI system with 7 specialized agents, multi-LLM support (Claude, GPT-4, Groq), MCP (Model Context Protocol) tool calling, persistent memory (Mem0), WebSocket real-time communication, and extensive integrations.
 
 ## 🌟 Features
+
+### 🤖 True Agentic Architecture
+- **Multi-turn Tool Calling**: Agents can iteratively call tools, analyze results, and make decisions
+- **MCP Integration**: Full Model Context Protocol support for standardized tool calling
+- **Tool Registry**: Centralized tool management with access control per agent
+- **Agentic Loop**: Agents reason → act → observe → iterate until solving problems
+- **13+ Built-in Tools**: Common utilities, outreach, and MLS tools ready to use
 
 ### 7 Specialized AI Agents
 
@@ -18,6 +25,7 @@ A production-ready, multi-agent AI system with 7 specialized agents, multi-LLM s
 
 - **Backend**: Python 3.11+ with FastAPI
 - **LLMs**: Anthropic Claude, OpenAI GPT-4, Groq
+- **Agent Framework**: MCP (Model Context Protocol) for tool calling
 - **Memory**: Mem0 for persistent agent memory
 - **Integrations**: Composio (200+ apps), RealEstateAPI.com
 - **Database**: PostgreSQL with SQLAlchemy
@@ -35,6 +43,30 @@ A production-ready, multi-agent AI system with 7 specialized agents, multi-LLM s
 ✅ Security best practices (no hardcoded secrets)  
 ✅ Production-ready patterns (retry logic, circuit breakers)  
 
+## 🤖 Agentic Capabilities
+
+This platform implements **true agentic behavior** where agents can:
+
+1. **Reason**: Analyze the user's request and decide which tools to use
+2. **Act**: Call tools to gather information or perform actions
+3. **Observe**: Process tool results and determine next steps
+4. **Iterate**: Continue calling tools until the problem is solved
+5. **Respond**: Provide a comprehensive answer based on all gathered information
+
+**Example Agentic Flow:**
+
+User: "Find leads who haven't been contacted in 30 days and send them a personalized follow-up email"
+
+→ Agent calls `search_leads` tool (days_since_contact=30)  
+→ Receives 3 leads  
+→ Agent analyzes each lead's interests  
+→ Agent calls `send_email` tool 3 times with personalized messages  
+→ Agent confirms: "I found 3 leads and sent personalized emails about their property interests"
+
+**This is fundamentally different from simple chat completions** - agents can perform multi-step tasks autonomously!
+
+See [AGENTIC_ARCHITECTURE.md](AGENTIC_ARCHITECTURE.md) for detailed documentation.
+
 ## 📁 Project Structure
 
 ```
@@ -43,7 +75,13 @@ ai-agent-platform/
 │   ├── agents/              # 7 specialized AI agents
 │   ├── coordinator/         # Agent routing logic
 │   ├── memory/              # Mem0 integration
-│   ├── integrations/        # External API clients
+│   ├── integrations/        # MCP client, Composio, RealEstateAPI
+│   │   ├── mcp_client.py    # Enhanced MCP implementation
+│   │   └── tool_registry.py # Centralized tool management
+│   ├── tools/               # Tool implementations
+│   │   ├── common_tools.py  # Shared utilities
+│   │   ├── outreach_tools.py # Lead management tools
+│   │   └── mls_tools.py     # Property search tools
 │   ├── models/              # Pydantic & SQLAlchemy models
 │   ├── services/            # LLM & WebSocket services
 │   ├── utils/               # Utilities & helpers
@@ -53,7 +91,8 @@ ai-agent-platform/
 ├── docker-compose.yml       # Docker orchestration
 ├── Dockerfile               # Docker image
 ├── requirements.txt         # Dependencies
-└── README.md                # This file
+├── README.md                # This file
+└── AGENTIC_ARCHITECTURE.md  # Detailed architecture docs
 ```
 
 ## 🚀 Quick Start

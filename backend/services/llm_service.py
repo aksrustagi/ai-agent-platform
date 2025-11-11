@@ -163,19 +163,33 @@ class LLMService:
             
             response = await self.anthropic_client.messages.create(**kwargs)
             
-            # Extract response
-            content = response.content[0].text if response.content else ""
+            # Extract response - Claude uses content blocks
+            content = ""
             tool_calls = None
             
-            if hasattr(response, 'tool_calls') and response.tool_calls:
-                tool_calls = [
-                    {
-                        "id": tc.id,
-                        "name": tc.function.name,
-                        "arguments": tc.function.arguments
-                    }
-                    for tc in response.tool_calls
-                ]
+            if response.content:
+                # Extract text content and tool use
+                text_blocks = []
+                tool_use_blocks = []
+                
+                for block in response.content:
+                    if block.type == "text":
+                        text_blocks.append(block.text)
+                    elif block.type == "tool_use":
+                        tool_use_blocks.append(block)
+                
+                content = "\n".join(text_blocks)
+                
+                # Convert Claude tool use to standard format
+                if tool_use_blocks:
+                    tool_calls = [
+                        {
+                            "id": tc.id,
+                            "name": tc.name,
+                            "arguments": tc.input
+                        }
+                        for tc in tool_use_blocks
+                    ]
             
             # Log response
             latency_ms = (time.time() - start_time) * 1000

@@ -36,6 +36,7 @@ from backend.models.responses import (
     SuccessResponse,
 )
 from backend.services.websocket_service import connection_manager
+from backend.tools.tool_initialization import initialize_all_tools
 from backend.utils.errors import AgentPlatformError
 from backend.utils.logger import configure_logging, get_logger
 
@@ -49,6 +50,11 @@ async def lifespan(app: FastAPI):
     settings = get_cached_settings()
     configure_logging(settings.log_level, json_logs=settings.is_production)
     logger.info("🚀 AI Agent Platform starting up")
+    
+    # Initialize all tools
+    logger.info("Initializing MCP tools...")
+    initialize_all_tools()
+    logger.info("✅ MCP tools initialized")
     
     yield
     

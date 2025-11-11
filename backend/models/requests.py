@@ -16,6 +16,7 @@ class AgentType(str, Enum):
     TRANSACTION = "transaction"
     CONTENT = "content"
     MARKETING = "marketing"
+    MORTGAGE = "mortgage"
     AUTO = "auto"  # Let coordinator decide
 
 
